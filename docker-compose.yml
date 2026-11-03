@@ -1,0 +1,86 @@
+name: retrieval
+
+x-retrieval-build: &retrieval-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    APP_UID: ${CONTAINER_UID:-10001}
+    APP_GID: ${CONTAINER_GID:-10001}
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: retrieval:local
+    build: *retrieval-build
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "1"
+    environment:
+      REDIS_URL: redis://redis:6379
+      LOG_DIR: /app/logs
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - type: bind
+        source: ./data
+        target: /app/data
+        read_only: true
+      - type: bind
+        source: ./data/logs/api
+        target: /app/logs
+    expose:
+      - "8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  sync_worker:
+    image: retrieval:local
+    build: *retrieval-build
+    command: ["python", "-m", "sync_worker"]
+    environment:
+      REDIS_URL: redis://redis:6379
+      LOG_DIR: /app/logs
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DB_HOST: ${DB_HOST:-172.20.170.149}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-ai_budget}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+      DB_USER: ${DB_USER:-}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DAILY_SYNC_TIMEZONE: ${DAILY_SYNC_TIMEZONE:-Asia/Shanghai}
+    volumes:
+      - type: bind
+        source: ./data
+        target: /app/data
+      - type: bind
+        source: ./data/logs/worker
+        target: /app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:

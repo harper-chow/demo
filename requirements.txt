@@ -1,0 +1,11 @@
+chromadb==1.5.9
+sentence-transformers==6.0.1
+fastapi==0.141.1
+uvicorn==0.52.4
+APScheduler==3.11.0
+redis==6.4.0
+pandas==3.0.5
+python-dotenv==1.2.3
+pydantic==2.13.5
+psycopg[binary]==3.2.9
+jieba==0.42.1

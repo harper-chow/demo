@@ -1,0 +1,40 @@
+# Version control and local editor state
+.git/
+.gitignore
+.vscode/
+.idea/
+.claude/
+
+# Python caches, virtual environments, and build output
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime-generated files and temporary artifacts
+*.log
+logs/
+data/logs/
+data/.index-staging/
+*.tmp
+*.swp
+*~
+
+# Keep source code, the bundled model, requirements.txt, config.py, app.py,
+# controllers/, and services/ available to the build.
+data/
+
+# Local secrets and operating-system metadata
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
